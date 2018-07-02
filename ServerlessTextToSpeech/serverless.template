@@ -55,7 +55,24 @@
     },
 
     "NewPost": {
-      
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "ServerlessTextToSpeech::ServerlessTextToSpeech.Functions::CreateNewPost",
+        "Runtime": "dotnetcore2.0",
+        "CodeUri": "",
+        "MemorySize": 256,
+        "Timeout": 30,
+        "Role": { "Fn::GetAtt" : [ "ExecutionRole", "Arn" ] },
+        "Events": {
+          "GetPostById": {
+            "Type": "Api",
+            "Properties": {
+              "Path": "/posts",
+              "Method": "POST"
+            }
+          }
+        }
+      }
     },
 
     "ExecutionRole": {
@@ -85,6 +102,7 @@
                     "polly:SynthesizeSpeech",
                     "dynamodb:Query",
                     "dynamodb:Scan",
+                    "dynamodb:GetItem",
                     "dynamodb:PutItem",
                     "dynamodb:UpdateItem",
                     "dynamodb:DescribeTable",
