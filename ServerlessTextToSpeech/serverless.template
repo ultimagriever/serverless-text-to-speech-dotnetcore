@@ -1,0 +1,152 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Transform" : "AWS::Serverless-2016-10-31",
+  "Description" : "Serverless Text-to-Speech in .NET Core 2.0.",
+
+  "Resources" : {
+
+    "GetPosts" : {
+      "Type" : "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "ServerlessTextToSpeech::ServerlessTextToSpeech.Functions::GetAllPosts",
+        "Runtime": "dotnetcore2.0",
+        "CodeUri": "",
+        "MemorySize": 256,
+        "Timeout": 30,
+        "Role": {
+          "Fn::GetAtt": ["ExecutionRole", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "DYNAMODB_TABLE": "PostsDotNet"
+          }
+        },
+        "Events": {
+          "GetAllPosts": {
+            "Type": "Api",
+            "Properties": {
+              "Path": "/posts",
+              "Method": "GET"
+            }
+          }
+        }
+      }
+    },
+
+    "GetPostById": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "ServerlessTextToSpeech::ServerlessTextToSpeech.Functions::GetPostById",
+        "Runtime": "dotnetcore2.0",
+        "CodeUri": "",
+        "MemorySize": 256,
+        "Timeout": 30,
+        "Role": { "Fn::GetAtt" : [ "ExecutionRole", "Arn" ] },
+        "Events": {
+          "GetPostById": {
+            "Type": "Api",
+            "Properties": {
+              "Path": "/posts/{id}",
+              "Method": "GET"
+            }
+          }
+        }
+      }
+    },
+
+    "NewPost": {
+      
+    },
+
+    "ExecutionRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [ "lambda.amazonaws.com" ]
+              },
+              "Action": [ "sts:AssumeRole" ]
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "TextToSpeechPolicy",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "polly:SynthesizeSpeech",
+                    "dynamodb:Query",
+                    "dynamodb:Scan",
+                    "dynamodb:PutItem",
+                    "dynamodb:UpdateItem",
+                    "dynamodb:DescribeTable",
+                    "sns:Publish",
+                    "s3:PutObject",
+                    "s3:PutObjectAcl",
+                    "s3:GetBucketLocation",
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": "*"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+
+    "PostNetCore": {
+      "Type": "AWS::Serverless::SimpleTable",
+      "Properties": {
+        "TableName": "PostNetCore",
+        "PrimaryKey": {
+          "Name": "Id",
+          "Type": "String"
+        }
+      }
+    },
+
+    "ConvertTopic": {
+      "Type": "AWS::SNS::Topic"
+    },
+
+    "AudioBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "AccessControl": "PublicRead"
+      }
+    },
+
+    "WebsiteBucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "AccessControl": "PublicRead",
+        "WebsiteConfiguration": {
+          "ErrorDocument": "index.html",
+          "IndexDocument": "index.html"
+        }
+      }
+    }
+  },
+
+  "Outputs" : {
+    "ApiURL" : {
+        "Description" : "API endpoint URL for Prod environment",
+        "Value" : { "Fn::Sub" : "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/" }
+    },
+    "WebsiteUrl": {
+      "Description": "The front-end website's URL",
+      "Value": { "Fn::GetAtt" : [ "WebsiteBucket", "WebsiteURL" ] }
+    }
+  }
+}
