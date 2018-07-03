@@ -6,9 +6,13 @@ using System.Threading.Tasks;
 
 using Amazon.Lambda.Core;
 using Amazon.Lambda.APIGatewayEvents;
+using Amazon.Lambda.SNSEvents;
 
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
+
+using Amazon.SimpleNotificationService;
+using Amazon.SimpleNotificationService.Model;
 
 using Newtonsoft.Json;
 
@@ -119,6 +123,15 @@ namespace ServerlessTextToSpeech
             try
             {
                 await Context.SaveAsync<Post>(post);
+
+                var snsClient = new AmazonSimpleNotificationServiceClient();
+                var publishRequest = new PublishRequest
+                {
+                    TopicArn = Environment.GetEnvironmentVariable("SNS_TOPIC"),
+                    Message = post.Id
+                };
+
+                await snsClient.PublishAsync(publishRequest);
             }
             catch (Exception ex)
             {
@@ -143,6 +156,35 @@ namespace ServerlessTextToSpeech
                 Body = post.Id,
                 Headers = new Dictionary<string, string> { { "Content-Type", "text/plain" } }
             };
+        }
+
+        /// <summary>
+        /// Converts a new post's text into speech, uploads audio to S3 and updates post record with S3 URL
+        /// </summary>
+        /// <param name="snsEvent"></param>
+        /// <param name="lambdaContext"></param>
+        /// <returns></returns>
+        public async Task ConvertToAudio(SNSEvent snsEvent, ILambdaContext lambdaContext)
+        {
+            string Id = snsEvent.Records[0].Sns.Message;
+
+            lambdaContext.Logger.LogLine($"Text-to-speech function. Post ID in DynamoDB: {Id}");
+
+            var post = await Context.LoadAsync<Post>(Id);
+
+            AudioConverter converter = new AudioConverter();
+
+            post.Url = await converter.ConvertAsync(Id, post.Voice, post.Text);
+            post.Status = "UPDATED";
+            
+            try
+            {
+                await Context.SaveAsync<Post>(post);
+            }
+            catch (Exception ex)
+            {
+                lambdaContext.Logger.LogLine($"Couldn't update post with ID {post.Id}: {ex.Message}");
+            }
         }
     }
 }

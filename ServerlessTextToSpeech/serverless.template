@@ -63,12 +63,42 @@
         "MemorySize": 256,
         "Timeout": 30,
         "Role": { "Fn::GetAtt" : [ "ExecutionRole", "Arn" ] },
+        "Environment": {
+          "Variables" : {
+            "SNS_TOPIC": { "Ref" : "ConvertTopic" }
+          }
+        },
         "Events": {
           "GetPostById": {
             "Type": "Api",
             "Properties": {
               "Path": "/posts",
               "Method": "POST"
+            }
+          }
+        }
+      }
+    },
+
+    "ConvertToAudio": {
+      "Type": "AWS::Serverless::Function",
+      "Properties": {
+        "Handler": "ServerlessTextToSpeech::ServerlessTextToSpeech.Functions::ConvertToAudio",
+        "Runtime": "dotnetcore2.0",
+        "CodeUri": "",
+        "MemorySize": 256,
+        "Timeout": 30,
+        "Role": { "Fn::GetAtt" : [ "ExecutionRole", "Arn" ] },
+        "Environment": {
+          "Variables": {
+            "BUCKET_NAME": { "Ref" : "AudioBucket" }
+          }
+        },
+        "Events": {
+          "Trigger": {
+            "Type": "SNS",
+            "Properties": {
+              "Topic": { "Ref" : "ConvertTopic" }
             }
           }
         }

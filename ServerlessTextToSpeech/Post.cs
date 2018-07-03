@@ -20,5 +20,8 @@ namespace ServerlessTextToSpeech
 
         [DynamoDBProperty]
         public string Voice { get; set; }
+
+        [DynamoDBProperty]
+        public string Url { get; set; }
     }
 }
