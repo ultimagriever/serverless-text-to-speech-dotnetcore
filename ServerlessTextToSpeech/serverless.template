@@ -11,7 +11,7 @@
         "Handler": "ServerlessTextToSpeech::ServerlessTextToSpeech.Functions::GetAllPosts",
         "Runtime": "dotnetcore2.0",
         "CodeUri": "",
-        "MemorySize": 256,
+        "MemorySize": 1024,
         "Timeout": 30,
         "Role": {
           "Fn::GetAtt": ["ExecutionRole", "Arn"]
@@ -39,7 +39,7 @@
         "Handler": "ServerlessTextToSpeech::ServerlessTextToSpeech.Functions::GetPostById",
         "Runtime": "dotnetcore2.0",
         "CodeUri": "",
-        "MemorySize": 256,
+        "MemorySize": 1024,
         "Timeout": 30,
         "Role": { "Fn::GetAtt" : [ "ExecutionRole", "Arn" ] },
         "Events": {
@@ -60,7 +60,7 @@
         "Handler": "ServerlessTextToSpeech::ServerlessTextToSpeech.Functions::CreateNewPost",
         "Runtime": "dotnetcore2.0",
         "CodeUri": "",
-        "MemorySize": 256,
+        "MemorySize": 1024,
         "Timeout": 30,
         "Role": { "Fn::GetAtt" : [ "ExecutionRole", "Arn" ] },
         "Environment": {
@@ -86,7 +86,7 @@
         "Handler": "ServerlessTextToSpeech::ServerlessTextToSpeech.Functions::ConvertToAudio",
         "Runtime": "dotnetcore2.0",
         "CodeUri": "",
-        "MemorySize": 256,
+        "MemorySize": 1024,
         "Timeout": 30,
         "Role": { "Fn::GetAtt" : [ "ExecutionRole", "Arn" ] },
         "Environment": {
