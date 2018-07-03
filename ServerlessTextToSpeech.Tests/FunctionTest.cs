@@ -19,7 +19,7 @@ namespace ServerlessTextToSpeech.Tests
         }
 
         [Fact]
-        public void TetGetMethod()
+        public void TestGetMethod()
         {
             TestLambdaContext context;
             APIGatewayProxyRequest request;
