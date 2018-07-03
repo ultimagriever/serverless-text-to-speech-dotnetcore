@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using Amazon;
 using Amazon.Polly;
 using Amazon.Polly.Model;
 using Amazon.S3;
@@ -119,7 +120,7 @@ namespace ServerlessTextToSpeech
 
             S3Region region = await GetBucketLocationAsync(client);
 
-            string url = region != null ? $"https://s3-{region}.amazonaws.com" : "https://s3.amazonaws.com";
+            string url = region.Value != RegionEndpoint.USEast1.DisplayName ? $"https://s3-{region.Value}.amazonaws.com" : "https://s3.amazonaws.com";
 
             url = $"{url}/{bucketName}/{id}.mp3";
 
