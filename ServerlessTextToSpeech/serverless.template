@@ -3,16 +3,28 @@
   "Transform" : "AWS::Serverless-2016-10-31",
   "Description" : "Serverless Text-to-Speech in .NET Core 2.0.",
 
+  "Globals": {
+    "Function": {
+      "Runtime": "dotnetcore2.0",
+      "CodeUri": "",
+      "MemorySize": 1024,
+      "Timeout": 30
+    },
+    "Api": {
+      "Cors": {
+        "AllowMethods": "'*'",
+        "AllowHeaders": "'*'",
+        "AllowOrigin": "'*'"
+      }
+    }
+  },
+
   "Resources" : {
 
     "GetPosts" : {
       "Type" : "AWS::Serverless::Function",
       "Properties": {
         "Handler": "ServerlessTextToSpeech::ServerlessTextToSpeech.Functions::GetAllPosts",
-        "Runtime": "dotnetcore2.0",
-        "CodeUri": "",
-        "MemorySize": 1024,
-        "Timeout": 30,
         "Role": {
           "Fn::GetAtt": ["ExecutionRole", "Arn"]
         },
@@ -37,10 +49,6 @@
       "Type": "AWS::Serverless::Function",
       "Properties": {
         "Handler": "ServerlessTextToSpeech::ServerlessTextToSpeech.Functions::GetPostById",
-        "Runtime": "dotnetcore2.0",
-        "CodeUri": "",
-        "MemorySize": 1024,
-        "Timeout": 30,
         "Role": { "Fn::GetAtt" : [ "ExecutionRole", "Arn" ] },
         "Events": {
           "GetPostById": {
@@ -58,10 +66,6 @@
       "Type": "AWS::Serverless::Function",
       "Properties": {
         "Handler": "ServerlessTextToSpeech::ServerlessTextToSpeech.Functions::CreateNewPost",
-        "Runtime": "dotnetcore2.0",
-        "CodeUri": "",
-        "MemorySize": 1024,
-        "Timeout": 30,
         "Role": { "Fn::GetAtt" : [ "ExecutionRole", "Arn" ] },
         "Environment": {
           "Variables" : {
@@ -84,10 +88,6 @@
       "Type": "AWS::Serverless::Function",
       "Properties": {
         "Handler": "ServerlessTextToSpeech::ServerlessTextToSpeech.Functions::ConvertToAudio",
-        "Runtime": "dotnetcore2.0",
-        "CodeUri": "",
-        "MemorySize": 1024,
-        "Timeout": 30,
         "Role": { "Fn::GetAtt" : [ "ExecutionRole", "Arn" ] },
         "Environment": {
           "Variables": {
