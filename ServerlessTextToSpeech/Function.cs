@@ -153,8 +153,8 @@ namespace ServerlessTextToSpeech
             return new APIGatewayProxyResponse
             {
                 StatusCode = (int)HttpStatusCode.Created,
-                Body = post.Id,
-                Headers = new Dictionary<string, string> { { "Content-Type", "text/plain" } }
+                Body = JsonConvert.SerializeObject(post),
+                Headers = new Dictionary<string, string> { { "Content-Type", "application/json" } }
             };
         }
 
