@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.SNSEvents;
+using Amazon.Lambda.DynamoDBEvents;
 
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
@@ -123,15 +124,6 @@ namespace ServerlessTextToSpeech
             try
             {
                 await Context.SaveAsync<Post>(post);
-
-                var snsClient = new AmazonSimpleNotificationServiceClient();
-                var publishRequest = new PublishRequest
-                {
-                    TopicArn = Environment.GetEnvironmentVariable("SNS_TOPIC"),
-                    Message = post.Id
-                };
-
-                await snsClient.PublishAsync(publishRequest);
             }
             catch (Exception ex)
             {
@@ -161,29 +153,39 @@ namespace ServerlessTextToSpeech
         /// <summary>
         /// Converts a new post's text into speech, uploads audio to S3 and updates post record with S3 URL
         /// </summary>
-        /// <param name="snsEvent"></param>
+        /// <param name="ddbEvent"></param>
         /// <param name="lambdaContext"></param>
         /// <returns></returns>
-        public async Task ConvertToAudio(SNSEvent snsEvent, ILambdaContext lambdaContext)
+        public async Task ConvertToAudio(DynamoDBEvent ddbEvent, ILambdaContext lambdaContext)
         {
-            string Id = snsEvent.Records[0].Sns.Message;
+            lambdaContext.Logger.LogLine("Executing from DynamoDB.");
 
-            lambdaContext.Logger.LogLine($"Text-to-speech function. Post ID in DynamoDB: {Id}");
-
-            var post = await Context.LoadAsync<Post>(Id);
-
-            AudioConverter converter = new AudioConverter();
-
-            post.Url = await converter.ConvertAsync(Id, post.Voice, post.Text);
-            post.Status = "UPDATED";
-            
-            try
+            foreach (var record in ddbEvent.Records)
             {
-                await Context.SaveAsync<Post>(post);
-            }
-            catch (Exception ex)
-            {
-                lambdaContext.Logger.LogLine($"Couldn't update post with ID {post.Id}: {ex.Message}");
+                if (record.Dynamodb.OldImage.Count <= 0)
+                {
+                    string id = record.Dynamodb.Keys["Id"].S;
+
+                    var post = await Context.LoadAsync<Post>(id);
+
+                    AudioConverter converter = new AudioConverter();
+
+                    post.Url = await converter.ConvertAsync(id, post.Voice, post.Text);
+                    post.Status = "UPDATED";
+
+                    try
+                    {
+                        await Context.SaveAsync<Post>(post);
+                    }
+                    catch (Exception ex)
+                    {
+                        lambdaContext.Logger.LogLine($"Couldn't update post with ID {post.Id}: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    lambdaContext.Logger.LogLine("Record already updated.");
+                }
             }
         }
     }

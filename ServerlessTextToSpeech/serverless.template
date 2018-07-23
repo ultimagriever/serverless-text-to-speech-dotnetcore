@@ -67,11 +67,6 @@
       "Properties": {
         "Handler": "ServerlessTextToSpeech::ServerlessTextToSpeech.Functions::CreateNewPost",
         "Role": { "Fn::GetAtt" : [ "ExecutionRole", "Arn" ] },
-        "Environment": {
-          "Variables" : {
-            "SNS_TOPIC": { "Ref" : "ConvertTopic" }
-          }
-        },
         "Events": {
           "GetPostById": {
             "Type": "Api",
@@ -95,10 +90,13 @@
           }
         },
         "Events": {
-          "Trigger": {
-            "Type": "SNS",
+          "DynamoDBTrigger": {
+            "Type": "DynamoDB",
             "Properties": {
-              "Topic": { "Ref" : "ConvertTopic" }
+              "Stream": {
+                "Fn::GetAtt": ["PostNetCore", "StreamArn"]
+              },
+              "StartingPosition": "TRIM_HORIZON"
             }
           }
         }
@@ -136,6 +134,10 @@
                     "dynamodb:PutItem",
                     "dynamodb:UpdateItem",
                     "dynamodb:DescribeTable",
+                    "dynamodb:GetRecords",
+                    "dynamodb:GetShardIterator",
+                    "dynamodb:ListStreams",
+                    "dynamodb:DescribeStream",
                     "sns:Publish",
                     "s3:PutObject",
                     "s3:PutObjectAcl",
@@ -154,18 +156,29 @@
     },
 
     "PostNetCore": {
-      "Type": "AWS::Serverless::SimpleTable",
+      "Type": "AWS::DynamoDB::Table",
       "Properties": {
         "TableName": "PostNetCore",
-        "PrimaryKey": {
-          "Name": "Id",
-          "Type": "String"
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "Id",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "Id",
+            "KeyType": "HASH"
+          }
+        ],
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        },
+        "StreamSpecification": {
+          "StreamViewType": "NEW_AND_OLD_IMAGES"
         }
       }
-    },
-
-    "ConvertTopic": {
-      "Type": "AWS::SNS::Topic"
     },
 
     "AudioBucket": {
@@ -212,40 +225,7 @@
             }
           ]
         },
-        "ManagedPolicyArns": ["arn:aws:iam::aws:policy/AWSIoTDataAccess"],
-        "Policies": [
-          {
-            "PolicyName": "InvokeApiGateway",
-            "PolicyDocument": {
-              "Version": "2012-10-17",
-              "Statement": [
-                {
-                  "Effect": "Allow",
-                  "Action": ["execute-api:Invoke"],
-                  "Resource": {
-                    "Fn::Join": [
-                      "",
-                      [
-                        "arn:aws:execute-api:",
-                        {
-                          "Ref": "AWS::Region"
-                        },
-                        ":",
-                        {
-                          "Ref": "AWS::AccountId"
-                        },
-                        ":",
-                        {
-                          "Ref": "ServerlessRestApi"
-                        }
-                      ]
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        ]
+        "ManagedPolicyArns": ["arn:aws:iam::aws:policy/AWSIoTDataAccess"]
       }
     }
   },
