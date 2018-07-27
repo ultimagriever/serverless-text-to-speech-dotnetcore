@@ -119,7 +119,7 @@ namespace ServerlessTextToSpeech
             await tu.UploadAsync(uploadRequest);
 
             string cdnDistribution = Environment.GetEnvironmentVariable("CLOUDFRONT_DISTRIBUTION");
-            string url = $"{cdnDistribution}/{id}.mp3";
+            string url = $"https://{cdnDistribution}/{id}.mp3";
 
             return url;
         }
