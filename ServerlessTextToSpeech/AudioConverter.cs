@@ -118,11 +118,8 @@ namespace ServerlessTextToSpeech
 
             await tu.UploadAsync(uploadRequest);
 
-            S3Region region = await GetBucketLocationAsync(client);
-
-            string url = region.Value != RegionEndpoint.USEast1.DisplayName ? $"https://s3-{region.Value}.amazonaws.com" : "https://s3.amazonaws.com";
-
-            url = $"{url}/{bucketName}/{id}.mp3";
+            string cdnDistribution = Environment.GetEnvironmentVariable("CLOUDFRONT_DISTRIBUTION");
+            string url = $"{cdnDistribution}/{id}.mp3";
 
             return url;
         }

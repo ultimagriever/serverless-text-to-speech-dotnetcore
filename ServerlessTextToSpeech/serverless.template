@@ -86,7 +86,8 @@
         "Role": { "Fn::GetAtt" : [ "ExecutionRole", "Arn" ] },
         "Environment": {
           "Variables": {
-            "BUCKET_NAME": { "Ref" : "AudioBucket" }
+            "BUCKET_NAME": { "Ref" : "AudioBucket" },
+            "CLOUDFRONT_DISTRIBUTION": { "Fn::GetAtt": ["AudioBucketDistribution", "DomainName"] }
           }
         },
         "Events": {
@@ -188,6 +189,47 @@
       }
     },
 
+    "AudioBucketOriginAccessIdentity": {
+      "Type": "AWS::CloudFront::CloudFrontOriginAccessIdentity",
+      "Properties": {
+        "CloudFrontOriginAccessIdentityConfig": {
+          "Comment": "AudioBucket"
+        }
+      }
+    },
+
+    "AudioBucketDistribution": {
+      "Type": "AWS::CloudFront::Distribution",
+      "DependsOn": "AudioBucket",
+      "Properties": {
+        "DistributionConfig": {
+          "Enabled": true,
+          "Origins": [
+            {
+              "DomainName": { "Fn::GetAtt": ["AudioBucket", "DomainName"] },
+              "Id": "AudioBucketOrigin",
+              "S3OriginConfig": {
+                "OriginAccessIdentity": {
+                  "Fn::Sub": "origin-access-identity/cloudfront/${AudioBucketOriginAccessIdentity}"
+                }
+              }
+            }
+          ],
+          "PriceClass": "PriceClass_All",
+          "DefaultCacheBehavior": {
+            "TargetOriginId": "AudioBucketOrigin",
+            "ForwardedValues": {
+              "QueryString": false,
+              "Cookies": {
+                "Forward": "none"
+              }
+            },
+            "ViewerProtocolPolicy": "allow-all"
+          }
+        }
+      }
+    },
+
     "WebsiteBucket": {
       "Type": "AWS::S3::Bucket",
       "Properties": {
@@ -238,6 +280,18 @@
     "WebsiteUrl": {
       "Description": "The front-end website's URL",
       "Value": { "Fn::GetAtt" : [ "WebsiteBucket", "WebsiteURL" ] }
+    },
+    "AudioBucketCdn": {
+      "Description": "The CloudFront distribution serving the audio files",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "https://",
+            { "Fn::GetAtt": ["AudioBucketDistribution", "DomainName"] }
+          ]
+        ]
+      }
     }
   }
 }
